@@ -1,0 +1,158 @@
+function Person(name, email, password) {
+  this.name = name;
+  this.email = email;
+  this.password = password;
+}
+Person.prototype.authenticate = function (password) {
+  return this.password === password;
+};
+
+function Client(name, email, password, address, phone) {
+  Person.call(this, name, email, password);
+  this.address = address;
+  this.phone = phone;
+}
+Client.prototype = Object.create(Person.prototype);
+Client.prototype.constructor = Client;
+Client.prototype.makeOrder = function () {
+  console.log('Creating order');
+};
+Client.prototype.showOrderHistory = function () {
+  console.log('Showing order history');
+};
+
+function DeliveryPerson(name, email, password, vehicle, availability) {
+  Person.call(this, name, email, password);
+  this.vehicle = vehicle;
+  this.availability = availability;
+  this.location = { longitude: 0, latitude: 0 };
+}
+DeliveryPerson.prototype = Object.create(Person.prototype);
+DeliveryPerson.prototype.constructor = DeliveryPerson;
+DeliveryPerson.prototype.acceptDelivery = function () {
+  this.updateAvailability(false);
+  console.log('Accepting order');
+};
+DeliveryPerson.prototype.updateLocation = function (longitude, latitude) {
+  console.log(`Updating ubication to ${longitude}, ${latitude}`);
+  this.location = { longitude, latitude };
+};
+DeliveryPerson.prototype.completeDelivery = function () {
+  this.updateAvailability(true);
+  console.log('Delivering order');
+};
+DeliveryPerson.prototype.updateAvailability = function (availability) {
+  this.availability = availability;
+};
+
+function Plate(name, price, ingredients) {
+  this.name = name;
+  this.price = price;
+  this.ingredients = ingredients;
+}
+Plate.prototype.getInfo = function () {
+  return `${this.name} - ${this.price} - ${this.ingredients}`;
+};
+
+function Restaurant(name, address, menu) {
+  this.name = name;
+  this.address = address;
+  this.menu = menu;
+}
+Restaurant.prototype.addPlate = function (plate) {
+  this.menu.addPlate(plate);
+};
+Restaurant.prototype.removePlate = function (plate) {
+  this.menu.removePlate(plate);
+};
+Restaurant.prototype.updatePlate = function (previousPlate, newPlate) {
+  this.menu.updatePlate(previousPlate, newPlate);
+};
+
+function Menu() {
+  this.plates = [];
+}
+Menu.prototype.addPlate = function (plate) {
+  this.plates.push(plate);
+};
+Menu.prototype.removePlate = function (plate) {
+  const plateIndexToRemove = this.plates.indexOf(plate);
+  if (plateIndexToRemove > -1) {
+    this.plates.splice(plateIndexToRemove, 1);
+  }
+};
+Menu.prototype.updatePlate = function (previousPlate, newPlate) {
+  const previousPlateIndex = this.plates.indexOf(previousPlate);
+  if (previousPlateIndex > -1) {
+    this.plates[previousPlateIndex] = newPlate;
+  }
+};
+
+function PhysicalMenu() {
+  Menu.call(this);
+}
+PhysicalMenu.prototype = Object.create(Menu.prototype);
+PhysicalMenu.prototype.constructor = PhysicalMenu;
+PhysicalMenu.prototype.print = function () {
+  this.plates.forEach((plate) => console.log(plate.getInfo()));
+};
+
+function QRMenu() {
+  Menu.call(this);
+}
+QRMenu.prototype = Object.create(Menu.prototype);
+QRMenu.prototype.constructor = QRMenu;
+QRMenu.prototype.generateQRCode = function () {
+  console.log('Creating QR');
+};
+
+function Order(client, restaurant, details, state) {
+  this.client = client;
+  this.restaurant = restaurant;
+  this.details = details;
+  this.state = state;
+}
+Order.prototype.updateState = function (newState) {
+  this.state = newState;
+};
+Order.prototype.computeTotal = function () {
+  return this.details.reduce((total, detail) => {
+    return total + detail.quantity * detail.plate.price;
+  }, 0);
+};
+
+function OrderDetail(plate, quantity) {
+  this.plate = plate;
+  this.quantity = quantity;
+}
+
+const client = new Client(
+  'Camilo',
+  'camilo.orrego554@gmail.com',
+  'password',
+  '720 Street',
+  '3152578901'
+);
+const deliveryPerson = new DeliveryPerson(
+  'Pacho',
+  'pachoflow@gmail',
+  'password',
+  'bike',
+  true
+);
+const plate = new Plate('dish 1', 100, ['ingredient 1', 'ingredient 2']);
+const restaurant = new Restaurant(
+  'Restaurant 1',
+  '720 Street',
+  new PhysicalMenu()
+);
+
+restaurant.addPlate(plate);
+
+const order = new Order(
+  client,
+  restaurant,
+  [new OrderDetail(plate, 2)],
+  'Preparing order'
+);
+console.log(`Total of the order: ${order.computeTotal()}`);
